@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Parking Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary:#00a65a; --bg-dark:#222d32; --bg-content:#1a1c23; --bg-card:#24262d; --text:#e5e7eb; }
+        body { font-family: 'Source Sans Pro', sans-serif; margin: 0; background: var(--bg-content); display: flex; height: 100vh; overflow: hidden; color: var(--text); }
+        .sidebar { width: 230px; background: var(--bg-dark); flex-shrink: 0; transition: all 0.3s; z-index: 100; }
+        .sidebar.collapsed { width: 0; overflow: hidden; }
+        .user-panel { padding: 15px; display: flex; align-items: center; background: #1a2226; }
+        .user-panel img { width: 45px; height: 45px; border-radius: 50%; margin-right: 10px; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+        .menu-header { padding: 10px 15px; font-size: 12px; color: #4b646f; background: #1a2226; text-transform: uppercase; }
+        .sidebar-menu li a { padding: 12px 15px; display: block; color: #b8c7ce; text-decoration: none; cursor: pointer; border-left: 3px solid transparent; }
+        .sidebar-menu li.active a { color: white; background: #1e282c; border-left-color: var(--primary); }
+        .sidebar-menu i { margin-right: 10px; width: 20px; }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .top-navbar { background: var(--primary); height: 50px; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; flex-shrink: 0; color: white; }
+        .content-padding { padding: 20px; }
+        .hidden { display: none !important; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .small-box { border-radius: 4px; position: relative; color: #fff; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .bg-aqua { background: #00c0ef; } .bg-green { background: #00a65a; } .bg-blue { background: #0073b7; }
+        .small-box h3 { font-size: 30px; font-weight: bold; margin: 0; }
+        .small-box .icon { position: absolute; top: 10px; right: 10px; font-size: 40px; color: rgba(0,0,0,0.15); }
+        .card-dark { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .plate-box { background: #000; border: 2px solid #444; border-radius: 8px; padding: 15px; text-align: center; color: var(--primary); font-size: 2.2rem; font-weight: 800; letter-spacing: 3px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: #2d2f39; padding: 15px; color: #9ca3af; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #2d2f39; }
+        .plate-bold { font-weight: 800; color: #fff; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="user-panel">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/ac/Default_pfp.jpg" alt="User">
+            <div><p style="margin:0; font-weight:bold;">Admin</p><small><i class="fa fa-circle text-success"></i> Online</small></div>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="menu-header">MAIN NAVIGATION</li>
+            <li id="menu-dashboard" class="active"><a onclick="showPage('dashboard')"><i class="fa fa-dashboard"></i> DASHBOARD</a></li>
+            <li id="menu-riwayat"><a onclick="showPage('riwayat')"><i class="fa fa-history"></i> RIWAYAT PARKIR</a></li>
+            <li class="menu-header">ADMIN</li>
+            <li><a onclick="resetData()" style="color: #ff6b6b; cursor: pointer;"><i class="fa fa-trash"></i> RESET DATA</a></li>
+        </ul>
+    </aside>
+
+    <div class="main-content">
+        <nav class="top-navbar">
+            <div style="display:flex; gap:15px; align-items:center;">
+                <i class="fa fa-bars" style="cursor:pointer; font-size:1.2rem;" onclick="toggleSidebar()"></i>
+                <b style="font-size: 1.1rem;">E-Parking System</b>
+            </div>
+            <div id="mqtt-status" style="font-size: 0.8rem; color: #ef4444;">MQTT: Disconnected</div>
+        </nav>
+
+        <div id="page-dashboard" class="content-padding">
+            <div class="stats-grid">
+                <div class="small-box bg-aqua"><h3 id="stat-hari-ini">{{ masuk_hari_ini }}</h3><p>Masuk Hari Ini</p><div class="icon"><i class="fa fa-car"></i></div></div>
+                <div class="small-box bg-green"><h3 id="stat-keluar">0</h3><p>Keluar Hari Ini</p><div class="icon"><i class="fa fa-sign-out"></i></div></div>
+                <div class="small-box bg-blue"><h3 id="stat-total">{{ total_masuk }}</h3><p>Total Kendaraan</p><div class="icon"><i class="fa fa-list"></i></div></div>
+            </div>
+            <div class="card-dark">
+                <h3><i class="fa fa-bar-chart"></i> Grafik Kendaraan</h3>
+                <div style="height: 300px;"><canvas id="dailyChart"></canvas></div>
+            </div>
+
+            <div class="card-dark" style="margin-top: 20px;">
+                <h3 style="color: #00c0ef;"><i class="fa fa-car"></i> Kendaraan Sedang Parkir (Realtime)</h3>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #444;">
+                                <th style="padding:10px; text-align:left;">UID Kartu</th>
+                                <th style="padding:10px; text-align:left;">Plat Nomor</th>
+                                <th style="padding:10px; text-align:left;">Waktu Masuk</th> <th style="padding:10px; text-align:left;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeTableBody">
+                            {% for v in active_vehicles_server %}
+                            <tr id="row-{{ v.uid }}" style="border-bottom: 1px solid #333;">
+                                <td style="padding:10px;">{{ v.uid }}</td>
+                                <td style="padding:10px;" class="plate-bold">{{ v.plate }}</td>
+                                <td style="padding:10px; color:#b8c7ce;">{{ v.timestamp }}</td>
+                                <td style="padding:10px;"><span style="background:#00a65a; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem;">Parkir</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div id="emptyMessage" style="padding:20px; text-align:center; color:#777; {% if active_vehicles_server %}display:none;{% endif %}">
+                        Tidak ada kendaraan di dalam.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-riwayat" class="content-padding hidden">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+                <div class="card-dark">
+                    <h3>Manual Check-in</h3>
+                    <form id="uploadForm"> 
+                        <input type="file" id="fileInput" name="image" required style="margin-bottom:10px; width:100%;">
+                        <button type="submit" id="btnUpload" style="background:#3b82f6; color:white; border:none; padding:10px; width:100%; border-radius:5px; cursor:pointer;">
+                            <i class="fa fa-upload"></i> Proses
+                        </button>
+                    </form>
+                    <div id="uploadStatus" style="margin-top:5px; color:#aaa;"></div>
+                </div>
+                <div class="card-dark">
+                    <h3>Deteksi Terakhir:</h3>
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <div class="plate-box" id="lastPlate">{{ last_plate_server }}</div>
+                        <img src="{{ last_img_server }}" id="lastPlateImg" width="150" style="border-radius:8px; border:1px solid #444; {% if not last_img_server %}display:none;{% endif %}">
+                    </div>
+                </div>
+            </div>
+            <div class="card-dark" style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Waktu</th><th>Gate</th><th>UID</th><th>Plat Nomor</th><th>Gambar</th></tr></thead>
+                    <tbody id="logTableBody">
+                        {% for row in logs %}
+                        <tr>
+                            <td>{{row[0]}}</td><td>{{row[1]}}</td><td>{{row[2]}}</td><td class="plate-bold">{{row[3]}}</td>
+                            <td><img src="{{row[4]}}" width="80" style="border-radius:4px;"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const saved = localStorage.getItem('activePage') || 'dashboard';
+            showPage(saved);
+        });
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+        function showPage(p) {
+            localStorage.setItem('activePage', p);
+            document.getElementById('page-dashboard').classList.toggle('hidden', p !== 'dashboard');
+            document.getElementById('page-riwayat').classList.toggle('hidden', p !== 'riwayat');
+            document.getElementById('menu-dashboard').classList.toggle('active', p === 'dashboard');
+            document.getElementById('menu-riwayat').classList.toggle('active', p === 'riwayat');
+        }
+
+        function resetData() {
+            if (confirm("⚠️ PERINGATAN!\n\nApakah Anda yakin ingin menghapus SEMUA data kendaraan?\nData di server dan alat akan dikosongkan.")) {
+                fetch('/reset', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('activeTableBody').innerHTML = '';
+                        document.getElementById('emptyMessage').style.display = 'block';
+                        document.getElementById('logTableBody').innerHTML = '';
+                        document.getElementById('stat-hari-ini').innerText = '0';
+                        document.getElementById('stat-total').innerText = '0';
+                        document.getElementById('stat-keluar').innerText = '0';
+                        dailyChart.data.labels = []; dailyChart.data.datasets[0].data = []; dailyChart.update();
+                        alert("✅ Reset Berhasil!");
+                    }
+                });
+            }
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('fileInput');
+            if(input.files.length === 0) return;
+            
+            const btn = document.getElementById('btnUpload');
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Loading...';
+            btn.disabled = true;
+
+            const fd = new FormData();
+            fd.append('image', input.files[0]);
+            fd.append('uid', 'manual'); fd.append('gate', 'manual');
+
+            fetch('/', { method: 'POST', body: fd })
+            .then(res => {
+                btn.innerHTML = '<i class="fa fa-check"></i> Terkirim';
+                setTimeout(() => { btn.innerHTML = '<i class="fa fa-upload"></i> Proses'; btn.disabled = false; input.value=""; }, 2000);
+            })
+            .catch(err => { console.error(err); btn.innerHTML = 'Error'; });
+        });
+
+        const ctx = document.getElementById('dailyChart').getContext('2d');
+        let dailyChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: {{ graph_labels|tojson }}, datasets: [{ label: 'Kendaraan', data: {{ graph_values|tojson }}, backgroundColor: '#00a65a' }] },
+            options: { maintainAspectRatio: false, plugins:{legend:{labels:{color:'#fff'}}}, scales:{y:{beginAtZero:true, grid:{color:'#333'}, ticks:{color:'#fff'}}, x:{grid:{display:false}, ticks:{color:'#fff'}}} }
+        });
+
+        // MQTT CONNECTION (Gunakan IP Laptop Anda untuk akses jaringan)
+        const client = mqtt.connect('ws://127.0.0.1:9001');
+        
+        client.on('connect', () => { 
+            document.getElementById('mqtt-status').innerText = 'MQTT: Connected'; 
+            document.getElementById('mqtt-status').style.color = '#10b981'; 
+            client.subscribe('gerbang/log/access'); 
+        });
+
+        client.on('message', (t, m) => {
+            try {
+                const d = JSON.parse(m.toString());
+                
+                // Update Last Detection
+                const lp = document.getElementById('lastPlate'); if(lp) lp.innerText = d.plate;
+                const li = document.getElementById('lastPlateImg'); if(li) { li.src = d.image_url; li.style.display='block'; }
+
+                // 1. Update Tabel Riwayat
+                const tbody = document.getElementById('logTableBody');
+                if(tbody && (tbody.rows.length === 0 || tbody.rows[0].cells[0].innerText !== d.timestamp)) {
+                     const row = tbody.insertRow(0);
+                     row.innerHTML = `<td>${d.timestamp}</td><td>${d.gate}</td><td>${d.uid}</td><td class="plate-bold">${d.plate}</td><td><img src="${d.image_url}" width="80" style="border-radius:4px;"></td>`;
+                }
+
+                // 2. Update Tabel Kendaraan Aktif (Dengan Waktu)
+                const activeBody = document.getElementById('activeTableBody');
+                const emptyMsg = document.getElementById('emptyMessage');
+
+                if (d.gate === 'masuk' || d.gate === 'manual') {
+                    if (!document.getElementById('row-' + d.uid)) {
+                        const newRow = document.createElement('tr');
+                        newRow.id = 'row-' + d.uid;
+                        newRow.style.borderBottom = '1px solid #333';
+                        newRow.innerHTML = `
+                            <td style="padding:10px;">${d.uid}</td>
+                            <td style="padding:10px;" class="plate-bold">${d.plate}</td>
+                            <td style="padding:10px; color:#b8c7ce;">${d.timestamp}</td>
+                            <td style="padding:10px;"><span style="background:#00a65a; color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem;">Parkir</span></td>
+                        `;
+                        activeBody.appendChild(newRow);
+                    }
+                } else if (d.gate === 'keluar') {
+                    const targetRow = document.getElementById('row-' + d.uid);
+                    if (targetRow) targetRow.remove();
+                }
+                
+                if(activeBody.children.length === 0) emptyMsg.style.display = 'block';
+                else emptyMsg.style.display = 'none';
+
+                // 3. Update Stats
+                const today = d.timestamp.split(' ')[0];
+                const sToday = document.getElementById('stat-hari-ini');
+                const sTotal = document.getElementById('stat-total');
+                const sOut = document.getElementById('stat-keluar');
+
+                if (d.gate === 'masuk' || d.gate === 'manual') {
+                    if(sToday) sToday.innerText = parseInt(sToday.innerText) + 1;
+                    if(sTotal) sTotal.innerText = parseInt(sTotal.innerText) + 1;
+                    const idx = dailyChart.data.labels.indexOf(today);
+                    if(idx !== -1) dailyChart.data.datasets[0].data[idx] += 1;
+                    else { dailyChart.data.labels.push(today); dailyChart.data.datasets[0].data.push(1); }
+                    dailyChart.update();
+                } else if (d.gate === 'keluar') {
+                    if(sOut) sOut.innerText = parseInt(sOut.innerText) + 1;
+                }
+            } catch(e) { console.error(e); }
+        });
+    </script>
+</body>
+</html>
