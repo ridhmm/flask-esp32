@@ -1,0 +1,10 @@
+flask
+opencv-python
+torch
+torchvision
+numpy
+paho-mqtt
+fast-plate-ocr
+pandas
+requests
+PyYAML
