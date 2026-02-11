@@ -1,10 +1,12 @@
-flask
+Flask
 opencv-python
 torch
 torchvision
-numpy
-paho-mqtt
-fast-plate-ocr
+torchaudio
 pandas
 requests
-PyYAML
+pyyaml
+tqdm
+seaborn
+paho-mqtt
+fast-plate-ocr
