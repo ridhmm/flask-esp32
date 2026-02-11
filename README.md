@@ -20,12 +20,33 @@ Buka terminal dan jalankan perintah berikut untuk mengunduh proyek ini:
 git clone https://github.com/ridhmm/flask-esp32.git
 cd flask-esp32
 ```
-### 2. Install Dependency
+### 2. Buat Virtual Environment (Disarankan)
+```bash
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# Mac/Linux
+source venv/bin/activate
+```
+
+### 3. Install Dependency
 Pastikan Python sudah terinstall, lalu jalankan:
 ```bash
 pip install -r requirements.txt
 ```
 Catatan: Jika terjadi error pada library torch atau fast-plate-ocr, disarankan untuk menginstallnya secara manual sesuai dengan OS dan Hardware (CPU/GPU) perangkat Anda.
+
+---
+## 🚀 Usage
+1. Nyalakan MQTT Broker (Mosquitto) terlebih dahulu pada port 1884.
+2. Buka terminal di dalam folder proyek, lalu ketik:
+
+```bash
+python server.py
+```
+3. Tunggu hingga muncul pesan: Running on http://0.0.0.0:5001
 
 ---
 ## 🧪 Testing
