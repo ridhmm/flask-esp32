@@ -21,6 +21,7 @@ git clone https://github.com/ridhmm/flask-esp32.git
 cd flask-esp32
 ```
 ### 2. Buat Virtual Environment (Disarankan)
+Pastikan Python sudah terinstall, lalu jalankan:
 ```bash
 python -m venv venv
 
@@ -32,7 +33,6 @@ source venv/bin/activate
 ```
 
 ### 3. Install Dependency
-Pastikan Python sudah terinstall, lalu jalankan:
 ```bash
 pip install -r requirements.txt
 ```
