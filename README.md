@@ -40,13 +40,16 @@ Catatan: Jika terjadi error pada library torch atau fast-plate-ocr, disarankan u
 
 ---
 ## 🚀 Usage
-1. Nyalakan MQTT Broker (Mosquitto) terlebih dahulu pada port 1884.
-2. Buka terminal di dalam folder proyek, lalu ketik:
+1. Nyalakan MQTT Broker (Mosquitto) terlebih dahulu pada terminal di dalam folder proyek:
+```bash
+mosquitto -c /opt/homebrew/Cellar/mosquitto/2.0.22_2/etc/mosquitto/mosquitto.conf -v
+```
+2. Lalu jalankan skrip utama:
 
 ```bash
 python server.py
 ```
-3. Tunggu hingga muncul pesan: Running on http://0.0.0.0:5001
+3. Tunggu hingga muncul pesan: Running on http://x.x.x.x:5001
 
 ---
 ## 🧪 Testing
