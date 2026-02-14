@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.8%20|%203.9%20|%203.10-blue)
 ![Flask](https://img.shields.io/badge/Framework-Flask-green)
-![YOLOv5](https://img.shields.io/badge/AI-YOLOv5-yellow)
+![YOLOv5](https://img.shields.io/badge/ML-YOLOv5-yellow)
 ![MQTT](https://img.shields.io/badge/IoT-MQTT-orange)
 
 > **Final Year Project / Thesis**
