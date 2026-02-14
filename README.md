@@ -45,7 +45,7 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
-Note: If you encounter errors with torch or fast-plate-ocr, it is recommended to install them manually according to your OS and Hardware (CPU/GPU) specifications.
+Note: If you encounter errors with _**torch**_ or _**fast-plate-ocr**_, it is recommended to install them manually according to your OS and Hardware (CPU/GPU) specifications.
 
 ---
 ## 🚀 Usage
@@ -71,7 +71,7 @@ python server.py
 ---
 ## 📂 Struktur Folder (Wajib)
 
-To ensure the system runs without File Not Found or TemplateNotFound errors, the project folder structure must look like this:
+To ensure the system runs without _**File Not Found**_ or _**TemplateNotFound**_ errors, the project folder structure must look like this:
 
 ```text
 📁 folder_proyek_ta/
@@ -87,6 +87,6 @@ To ensure the system runs without File Not Found or TemplateNotFound errors, the
 ```
 
 ## ❓ Troubleshooting
-TemplateNotFound:         Ensure the templates folder exists and contains index.html.
-MQTT Connection Refused:  Check if Mosquitto is running. Ensure the port in server.py matches the broker (1884).
-YOLO Error / Load Failed: Change the model loading code in server.py to use source='github'.
+TemplateNotFound:         Ensure the templates folder exists and contains index.html./n
+MQTT Connection Refused:  Check if Mosquitto is running. Ensure the port in server.py matches the broker (1884)./n
+YOLO Error / Load Failed: Change the model loading code in server.py to use source='github'./n
